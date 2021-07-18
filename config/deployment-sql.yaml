@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: mysql-app
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: mysql-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-app
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql-container
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials-secret
+                key: password
+
+        ports:
+        - containerPort: 3306
+          name: mysql-app
+          protocol: TCP
+        volumeMounts:
+        - name: mysql-pv-storage
+          mounthPath: /var/lib/mysql
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1.0"
+          requests:
+            memory: "256Mi"
+            cpu: "0.5"
+      volumes:
+      - name: mysql-pv-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+        

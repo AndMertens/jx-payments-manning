@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jx-payment-migrations
+spec:
+  template:
+    spec:
+      containers:
+      - name: jx-payment-migrations
+        image: andymert/jx-paymenst:latest
+        command: ['python',  'manage.py', 'migrate']
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-credentials-secret
+              key: password
+              restartPolicy: Never
+  backoffLimit: 4
